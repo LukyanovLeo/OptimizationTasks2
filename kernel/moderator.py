@@ -1,9 +1,9 @@
-import math_functions as mf
+from math_functions import *
 
 
-def select_operation(descriptor):
+def select_operation(descriptor, params):
     if descriptor == 1:
-        print('Я сделяль')
+        unconditional_extremum(params)
     elif descriptor == 2:
         pass
     elif descriptor == 2:

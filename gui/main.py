@@ -78,7 +78,7 @@ class Unconditional(tk.Toplevel):
         entry_exp.pack(side=tk.RIGHT)
 
         btn_solve = tk.Button(self, text='Решить')
-        btn_solve.bind('<Button-1>', lambda event: select_operation(1))
+        btn_solve.bind('<Button-1>', lambda event: select_operation(1, entry_exp.get()))
         btn_solve.pack(side=tk.BOTTOM)
 
         set_geometry(self, 350, 150)
