@@ -88,8 +88,22 @@ class SteepestDescend(tk.Toplevel):
     def __init__(self):
         super().__init__(root)
 
-    def init_unconditional(self):
-        self.title('sasasasas')
+    def init_steepest_descend(self):
+        self.title('Метод наискорейшего спуска')
+        label_input = tk.Label(self, text='ВВЕДИТЕ ДАННЫЕ:', font=('Arial', 12), height=3)
+        label_input.pack(side=tk.TOP)
+
+        label_exp = tk.Label(self, text='Выражение: *')
+        label_exp.pack(side=tk.LEFT)
+
+        entry_exp = tk.Entry(self, width=40)
+        entry_exp.pack(side=tk.RIGHT)
+
+        btn_solve = tk.Button(self, text='Решить')
+        btn_solve.bind('<Button-1>', lambda event: select_operation(2, entry_exp.get()))
+        btn_solve.pack(side=tk.BOTTOM)
+
+        set_geometry(self, 350, 150)
 
 
 #
