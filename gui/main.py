@@ -87,21 +87,34 @@ class Unconditional(tk.Toplevel):
 class SteepestDescend(tk.Toplevel):
     def __init__(self):
         super().__init__(root)
+        self.init_steepest_descend()
 
     def init_steepest_descend(self):
         self.title('Метод наискорейшего спуска')
         label_input = tk.Label(self, text='ВВЕДИТЕ ДАННЫЕ:', font=('Arial', 12), height=3)
-        label_input.pack(side=tk.TOP)
+        label_input.grid(row=0, column=1)
 
         label_exp = tk.Label(self, text='Выражение: *')
-        label_exp.pack(side=tk.LEFT)
+        label_exp.grid(row=1, column=0)
 
         entry_exp = tk.Entry(self, width=40)
-        entry_exp.pack(side=tk.RIGHT)
+        entry_exp.grid(row=1, column=2)
+
+        label_first_point = tk.Label(self, text='Начальная точка: *')
+        label_first_point.grid(row=2, column=0)
+
+        entry_first_point = tk.Entry(self, width=40)
+        entry_first_point.grid(row=2, column=2)
+
+        label_precision = tk.Label(self, text='Точность: *')
+        label_precision.grid(row=3, column=0)
+
+        entry_precision = tk.Entry(self, width=40)
+        entry_precision.grid(row=3, column=2)
 
         btn_solve = tk.Button(self, text='Решить')
         btn_solve.bind('<Button-1>', lambda event: select_operation(2, entry_exp.get()))
-        btn_solve.pack(side=tk.BOTTOM)
+        btn_solve.grid(row=4, column=1)
 
         set_geometry(self, 350, 150)
 
@@ -110,9 +123,40 @@ class SteepestDescend(tk.Toplevel):
 class Lagrange(tk.Toplevel):
     def __init__(self):
         super().__init__(root)
+        self.init_lagrange()
 
-    def init_unconditional(self):
-        self.title('sasasasas')
+    def init_lagrange(self):
+        self.title('Метод Лагранжа')
+        label_input = tk.Label(self, text='ВВЕДИТЕ ДАННЫЕ:', font=('Arial', 12), height=3)
+        label_input.grid(row=0, column=1)
+
+        label_exp = tk.Label(self, text='Выражение: *')
+        label_exp.grid(row=1, column=0)
+
+        entry_exp = tk.Entry(self, width=40)
+        entry_exp.grid(row=1, column=2)
+
+        label_first_restriction = tk.Label(self, text='Ор=граничение 1: *')
+        label_first_restriction.grid(row=2, column=0)
+
+        entry_first_restriction = tk.Entry(self, width=40)
+        entry_first_restriction.grid(row=2, column=2)
+
+        label_second_restriction = tk.Label(self, text='Ограничение 2: ')
+        label_second_restriction.grid(row=3, column=0)
+
+        entry_second_restriction = tk.Entry(self, width=40)
+        entry_second_restriction.grid(row=3, column=2)
+
+        btn_solve = tk.Button(self, text='Решить')
+        btn_solve.bind('<Button-1>', lambda event: select_operation(3, '{}|{}|{}'.format(entry_exp.get(),
+                                                                                       entry_first_restriction.get(),
+                                                                                       entry_second_restriction.get())))
+
+        btn_solve.grid(row=4, column=1)
+
+        set_geometry(self, 350, 150)
+
 
 
 #

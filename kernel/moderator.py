@@ -7,7 +7,7 @@ def select_operation(descriptor, params):
     elif descriptor == 2:
         steepest_descent(params)
     elif descriptor == 2:
-        pass
+        lagrange(params)
     elif descriptor == 2:
         pass
     elif descriptor == 2:

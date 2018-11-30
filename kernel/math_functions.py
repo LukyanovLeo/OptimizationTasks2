@@ -1,6 +1,6 @@
 import sympy as sp
 import sympy.parsing.sympy_parser as ssp
-
+from sympy.utilities.iterables import flatten
 from math import *
 
 
@@ -52,8 +52,21 @@ def steepest_descent(str_expr, x0=0, y0=0, eps1=0, eps2=0):
         grad_start_point = [g.subs({symbols[0]: x0, symbols[1]: y0}) for g in grad]
         grad_len = sqrt(sum(map(lambda i: i ** 2, grad_start_point)))
 
+def lagrange(params, min=True):
+    list_params = params.split('|')
+    expr = ssp.parse_expr(list_params[0])
+    symbols = sorted(list(map(str, expr.free_symbols)))
+    lam1, lam2 = sp.symbols('lam1, lam2')
 
+    restrictions = [r for r in list_params if r.find('<=') >= 0 or r.find('>=') >= 0]
+    restrictions = list(map(lambda x: x.replace('>=', '-').replace('<=', '-'), restrictions))
 
+    lagr = ssp.parse_expr('{}+lam1*({})+lam2*({})'.format(expr, restrictions[0], restrictions[1]))
+    x1_diff = sp.diff(lagr, symbols[0])
+    x2_diff = sp.diff(lagr, symbols[1])
+    lam1_diff = sp.diff(lagr, lam1)
+    lam2_diff = sp.diff(lagr, lam2)
+    print(sp.nonlinsolve([x1_diff, x2_diff, lam1_diff, lam2_diff], [symbols[0], symbols[1], lam1, lam2]))
 
-
+lagrange('2*x1**2  +x2**2 | x1**2+x2**2<=4 | 4*x1**2+x2**2>=4')
 #steepest_descent('4*(x1-5)**2 + (x2-6)**2', 8, 9)
