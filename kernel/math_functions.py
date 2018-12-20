@@ -31,7 +31,6 @@ def unconditional_extremum(str_expr):
 
 
 def steepest_descent(str_expr, x0=0, y0=0, eps_x=0.0, eps_y=0.0):
-
     expr = ssp.parse_expr(str_expr)
     symbols = sorted(list(map(str, expr.free_symbols)))
 
@@ -50,6 +49,7 @@ def steepest_descent(str_expr, x0=0, y0=0, eps_x=0.0, eps_y=0.0):
         solving = sp.solve(sp.diff(new_expr))
         x0 = x1.subs(lam, float(solving[0]))
         y0 = y1.subs(lam, float(solving[0]))
+
         if abs(x0_pre) - x0 < eps_x and abs(y0_pre - y0) < eps_y:
             print(round(x0), round(y0))
             break
@@ -60,21 +60,69 @@ def steepest_descent(str_expr, x0=0, y0=0, eps_x=0.0, eps_y=0.0):
         print(x0, y0, 'solv:', )
 
 
-def lagrange(params, min=True):
+def lagrange(params, x0=0, y0=0):
+    # парсим и вводим новые переменные
     list_params = params.split('|')
     expr = ssp.parse_expr(list_params[0])
     symbols = sorted(list(map(str, expr.free_symbols)))
     lam1, lam2 = sp.symbols('lam1, lam2')
 
-    restrictions = [r for r in list_params if r.find('<=') >= 0 or r.find('>=') >= 0]
-    restrictions = list(map(lambda x: x.replace('>=', '-').replace('<=', '-'), restrictions))
+    # Сохраняем отдельно ограничения
+    restrictions = list()
 
-    lagr = ssp.parse_expr('{}+lam1*({})+lam2*({})'.format(expr, restrictions[0], restrictions[1]))
+    # сохраняем значения ограничений
+    restriction_answers = list()
+    for i in range(1, len(list_params)):
+        if '>=' in list_params[i]:
+            restrictions.append(list_params[i][:list_params[i].find('>=')].strip())
+            restriction_answers.append(list_params[i][list_params[i].find('>=') + 2:].strip())
+        if '<=' in list_params[i]:
+            restrictions.append(list_params[i][:list_params[i].find('<=')].strip())
+            restriction_answers.append(list_params[i][list_params[i].find('<=') + 2:].strip())
+
+    # формируем функцию Лагранжа
+    lagr = ssp.parse_expr('{}+lam1*({}-{})+lam2*({}-{})'.format(expr, restrictions[0], restriction_answers[0],
+                                                                restrictions[1], restriction_answers[1]))
+    # формируем систему уравнений от частных производных по функции Лагранжа
     x1_diff = sp.diff(lagr, symbols[0])
     x2_diff = sp.diff(lagr, symbols[1])
     lam1_diff = sp.diff(lagr, lam1)
     lam2_diff = sp.diff(lagr, lam2)
-    print(sp.nonlinsolve([x1_diff, x2_diff, lam1_diff, lam2_diff], [symbols[0], symbols[1], lam1, lam2]))
+
+    # решаем систему уравнений
+
+    solving = sp.solve([x1_diff, x2_diff, lam1_diff, lam2_diff], [symbols[0], symbols[1], lam1, lam2])[0]
+    print(solving)
+    # чисто чтобы побыстрее считать (4)
+    lam2_value = lagr.subs({symbols[0]:solving[0], symbols[1]:solving[1], lam1:solving[2], lam2:solving[3]})
+
+    # ищем точку с решением
+    new_lagr = lagr.subs({lam1:-5, lam2:4})
+    x1_diff = sp.diff(new_lagr, symbols[0])
+    x2_diff = sp.diff(new_lagr, symbols[1])
+
+    # ищем вторые производные
+    x1_x1_diff = sp.diff(x1_diff, symbols[0])
+    x1_x2_diff = sp.diff(x1_diff, symbols[1])
+    x2_x2_diff = sp.diff(x2_diff, symbols[1])
+
+    # ищем значения в найденной точке (0, 0)
+    A = x1_x1_diff.subs({symbols[0]: 0, symbols[1]: 2})
+    B = x1_x2_diff.subs({symbols[0]: 0, symbols[1]: 2})
+    C = x2_x2_diff.subs({symbols[0]: 0, symbols[1]: 2})
+
+    hessian = [[A, B],[B, C]]
+    if A > 0:
+        print(solving[0], solving[1])
+
+
+
+
+
+
+
+
+
 
 
 def simplex_alg(params=None, args_number=1):
@@ -156,9 +204,12 @@ def simplex_alg(params=None, args_number=1):
 
 
 
-unconditional_extremum('3*x1*x2 - x1*x2**2 - x1**2*x2')
+#unconditional_extremum('3*x1*x2 - x1*x2**2 - x1**2*x2')
 
-# lagrange('2*x1**2  +x2**2 | x1**2+x2**2<=4 | 4*x1**2+x2**2>=4')
+#lagrange('2*x1**2+x2**2 | x1**2+x2**2<=4 | 4*x1**2+x2**2>=4')
+lagrange('x1**2+x2**2 | x1**2+x2**2<=16 | x1+x2>=4', 0, 4)
+
+
 #steepest_descent('4*(x1-5)**2 + (x2-6)**2', 8, 9, 0.1, 0.1)
 # steepest_descent('x1**3-x1*x2+x2**2-2*x1+3*x2-4', 0, 0)
 #simplex_alg('3*x1+50*x2 | 200*x1+150*x2>=-200 | 14*x1+4*x2<=14', 2)
