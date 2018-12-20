@@ -163,10 +163,12 @@ class Lagrange(tk.Toplevel):
 class SimplexAlg(tk.Toplevel):
     def __init__(self):
         super().__init__(root)
+        self.init_simplex_alg()
 
-    def init_unconditional(self):
-        self.title('sasasasas')
-
+    def init_simplex_alg(self):
+        btn_solve = tk.Button(self, text='Решить')
+        btn_solve.bind('<Button-1>', lambda event: select_operation(4))
+        btn_solve.pack(padx=0.5, pady=0.5)
 
 #
 class Graphical(tk.Toplevel):

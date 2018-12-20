@@ -1,6 +1,7 @@
+import re
 import sympy as sp
 import sympy.parsing.sympy_parser as ssp
-from sympy.utilities.iterables import flatten
+from sympy.printing.repr import srepr
 from math import *
 
 
@@ -29,7 +30,7 @@ def unconditional_extremum(str_expr):
                 print('Max: ', c)
 
 
-def steepest_descent(str_expr, x0=0, y0=0, eps1=0, eps2=0):
+def steepest_descent(str_expr, x0=0, y0=0, eps_x=0.0, eps_y=0.0):
 
     expr = ssp.parse_expr(str_expr)
     symbols = sorted(list(map(str, expr.free_symbols)))
@@ -38,8 +39,9 @@ def steepest_descent(str_expr, x0=0, y0=0, eps1=0, eps2=0):
     grad_start_point = [g.subs({symbols[0]:x0, symbols[1]:y0}) for g in grad]
     grad_len = sqrt(sum(map(lambda i: i**2, grad_start_point)))
 
+    x0_pre = 0.0
+    y0_pre = 0.0
     while(grad_len>0):
-
         x1 = ssp.parse_expr('{}-{}*lam'.format(x0, grad_start_point[0]))
         y1 = ssp.parse_expr('{}-{}*lam'.format(y0, grad_start_point[1]))
 
@@ -48,9 +50,15 @@ def steepest_descent(str_expr, x0=0, y0=0, eps1=0, eps2=0):
         solving = sp.solve(sp.diff(new_expr))
         x0 = x1.subs(lam, float(solving[0]))
         y0 = y1.subs(lam, float(solving[0]))
-
+        if abs(x0_pre) - x0 < eps_x and abs(y0_pre - y0) < eps_y:
+            print(round(x0), round(y0))
+            break
         grad_start_point = [g.subs({symbols[0]: x0, symbols[1]: y0}) for g in grad]
         grad_len = sqrt(sum(map(lambda i: i ** 2, grad_start_point)))
+        x0_pre = x0
+        y0_pre = y0
+        print(x0, y0, 'solv:', )
+
 
 def lagrange(params, min=True):
     list_params = params.split('|')
@@ -68,5 +76,91 @@ def lagrange(params, min=True):
     lam2_diff = sp.diff(lagr, lam2)
     print(sp.nonlinsolve([x1_diff, x2_diff, lam1_diff, lam2_diff], [symbols[0], symbols[1], lam1, lam2]))
 
-lagrange('2*x1**2  +x2**2 | x1**2+x2**2<=4 | 4*x1**2+x2**2>=4')
-#steepest_descent('4*(x1-5)**2 + (x2-6)**2', 8, 9)
+
+def simplex_alg(params=None, args_number=1):
+    list_expr = params.split('|')
+    target_expr = ssp.parse_expr(list_expr[0])
+    symbols = sorted(list(map(str, target_expr.free_symbols)))
+
+    counter = 0
+    basis = list()
+    matrix = list()
+    basis_coeffs = list()
+
+    for i in range (0, len(list_expr)):
+        if i != 0:
+            counter += 1
+            # добавляем базисные переменные
+            new_symbol = 'x' + str(counter - 1 + len(list_expr))
+            symbols.append(new_symbol)
+            basis_coeffs.append(new_symbol)
+            # убираем знаки равенств
+            list_expr[i] = list_expr[i].replace('>=', '-').replace('<=', '-')
+            list_expr[i] = ssp.parse_expr('{}+{}'.format(list_expr[i], symbols[-1]))
+            basis_member = int(re.search('-?\d+', re.findall("Integer\(-?\d+\)", srepr(list_expr[i]))[-1]).group(0))
+            if (basis_member < 0):
+                basis_member = basis_member * -1
+                list_expr[i] = list_expr[i] * -1
+            basis.append(basis_member)
+        else:
+            list_expr[i] = ssp.parse_expr(format(list_expr[i]))
+            basis.append(0)
+            basis_coeffs.append(nan)
+
+    # делаем матрицу коэффициентов (базисы хранятся отдельно)
+    for expr in list_expr:
+        expr_coeffs = list()
+        for symbol in symbols:
+            expr_coeffs.append(expr.coeff(symbol))
+
+        matrix.append(expr_coeffs)
+    # ф-ла Таккера
+    matrix[0] = [m*-1 for m in matrix[0]]
+
+    #### решаем симплекс-метод
+    # (matrix[0][0] > 0 or matrix[0][1] > 0) and ('x1' not in basis_coeffs or 'x2' not in basis_coeffs)
+    for k in range(1, 3):
+        # 1. ищем столбец с минимальным значением целевой функции
+        key_column = 0
+        for i in range(0, args_number):
+            if matrix[0][i] > key_column:
+                key_column = matrix[0][i]
+
+        # запоминаем номер ключевого столбца
+        key_string = 0
+        for i in range(1, len(basis)):
+            if matrix[i][key_column] != 0 and basis[i]/matrix[i][key_column] < basis[key_string]/matrix[i][key_column]:
+                key_string = i
+
+        print(key_string, key_column)
+        # ключевой элемент
+        key_elem = matrix[key_string][key_column]
+        # 2. Строим новую матрицу
+        # делим
+        matrix[key_string] = [m/key_elem for m in matrix[key_string]]
+        basis[key_string] = basis[key_string]/key_elem
+        basis_coeffs[key_string] = symbols[key_column]
+
+        new_matrix = list(list())
+        for i in range(len(matrix)):
+            new_matrix_str = list()
+            for j in range(len(matrix[i])):
+                if i == key_string:
+                    new_matrix_str.append(matrix[i][j])
+                else:
+                    new_matrix_str.append(matrix[i][j] - matrix[key_string][j] * matrix[i][key_column])
+            new_matrix.append(new_matrix_str)
+
+        matrix = new_matrix
+        print(matrix)
+
+
+
+unconditional_extremum('3*x1*x2 - x1*x2**2 - x1**2*x2')
+
+# lagrange('2*x1**2  +x2**2 | x1**2+x2**2<=4 | 4*x1**2+x2**2>=4')
+#steepest_descent('4*(x1-5)**2 + (x2-6)**2', 8, 9, 0.1, 0.1)
+# steepest_descent('x1**3-x1*x2+x2**2-2*x1+3*x2-4', 0, 0)
+#simplex_alg('3*x1+50*x2 | 200*x1+150*x2>=-200 | 14*x1+4*x2<=14', 2)
+
+# expr.args
